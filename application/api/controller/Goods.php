@@ -2,9 +2,10 @@
 
 namespace app\api\controller;
 
+use think\Config;
 use think\Controller;
-use think\Request;
 use think\Db;
+use think\Request;
 
 class Goods extends BaseApi
 {
@@ -15,34 +16,39 @@ class Goods extends BaseApi
      * @param int page 页码
      */
 
-    public function getList()
+    public function getlist()
     {
-        $search = $this->request->request('search');
-        $page = $this->request->request('page');
+
+        $search = input('get.search');
+        $page = input('get.page');
+        $STATUS = config('config.STATUS');
         if (!$page) {
             $page = 1;
         }
+
+        if (!$search) {
+            $search = '';
+        }
+
         $pageSize = 4;
         $list = Db('Goods')->where('name', 'like', "%$search%")->page($page, $pageSize)->order('id')->select();
         if (!$list) {
-            $this->response(0, '没有数据');
+            $this->response($STATUS['RESULT_NULL']['code'], $STATUS['RESULT_NULL']['msg']);
         }
         $count = Db('Goods')->where('name', 'like', "%$search%")->count();
         $pageCount = ceil($count / $pageSize);
-        $data = array(
-            //'code' => 1,
-            //'msg' => '查询成功',
+        $data = $list;
+        $page = array(
             'pageCount' => $pageCount,
-            'pageNo' => $page,
+            'pageNo' => (int) $page,
             'pageSize' => $pageSize,
             'total' => $count,
-            'data' => $list
         );
         // header("Access-Control-Allow-Origin: *");
         // header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization");
         // header('Access-Control-Allow-Methods: GET, POST, PUT,DELETE,OPTIONS,PATCH');
         //return json($data)->header($this->header);
-        $this->response(1, '查询成功', $data);
+        $this->response($STATUS['SUCCESS']['code'], $STATUS['SUCCESS']['msg'], $data, '', $page);
     }
 
     /**
@@ -50,17 +56,18 @@ class Goods extends BaseApi
      * @param int 商品ID
      */
 
-    public function getInfo()
+    public function getinfo()
     {
-        $id = $this->request->request('id');
+        $id = input('get.id');
+        $STATUS = config('config.STATUS');
         if (!$id) {
-            $this->response(3, '参数不全，请检查');
+            $this->response($STATUS['PARAM_MISSING']['code'],$STATUS['PARAM_MISSING']['msg']);
         }
         $info = Db('Goods')->find($id);
         if ($info) {
-            $this->response(1, '查询成功', $info);
+            $this->response($STATUS['SUCCESS']['code'], $STATUS['SUCCESS']['msg'], $info);
         } else {
-            $this->response(0, '没有数据');
+            $this->response($STATUS['RESULT_NULL']['code'], $STATUS['RESULT_NULL']['msg']);
         }
     }
 }

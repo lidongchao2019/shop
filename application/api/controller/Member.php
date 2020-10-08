@@ -2,10 +2,10 @@
 
 namespace app\api\controller;
 
-use think\Controller;
-use think\Request;
-use think\Db;
 use Firebase\JWT\JWT;
+use think\Config;
+use think\Controller;
+use think\Db;
 
 class Member extends BaseApi
 {
@@ -20,23 +20,30 @@ class Member extends BaseApi
     {
         $username = input('post.username');
         $password = input('post.password');
+        $STUTAS = config('config.STATUS');
+
         if (!$username || !$password) {
-            $this->response(3, '参数不全，请检查');
+            $this->response($STUTAS['PARAM_MISSING']['code'], $STUTAS['PARAM_MISSING']['msg']);
         }
         $time = date('Y-m-d H:i:s');
-        $where = array('username' => $username, 'password' => $password);
+        $where = array('username' => $username);
         $res = Db('member')->where($where)->find();
         if ($res) {
-            Db('member')->where($where)->update(['l_date' => $time]);
-            $data = array(
-                'userid' => $res['id'],
-                'username' => $res['username'],
-                'exp' => time() + 7200
-            );
-            $jwt = JWT::encode($data, 'itcast');
-            $this->response(1, '登录成功', null, $jwt);
+            if ($res['password'] == $password) {
+                Db('member')->where($where)->update(['l_date' => $time]);
+                $data = array(
+                    'userid' => $res['id'],
+                    'username' => $res['username'],
+                    'exp' => time() + 7200,
+                );
+                $jwt = JWT::encode($data, 'itcast');
+                $this->response($STUTAS['SUCCESS']['code'], $STUTAS['SUCCESS']['msg'], null, $jwt);
+            } else {
+                $this->response($STUTAS['USER_PWD_ERROR']['code'],$STUTAS['USER_PWD_ERROR']['msg']);
+            }
+
         } else {
-            $this->response(0, '没有这个会员');
+            $this->response($STUTAS['USER_NOT_EXIST']['code'], $STUTAS['USER_NOT_EXIST']['msg']);
         }
     }
 
@@ -49,28 +56,38 @@ class Member extends BaseApi
 
     public function register()
     {
-        $username = $this->request->request('username');
-        $password = $this->request->request('password');
-        $email = $this->request->request('email');
+        //接收参数
+        $username = input('post.username');
+        $password = input('post.password');
+        $email = input('post.email');
+        $STUTAS = config('config.STATUS');
+
+        //判断参数是否有效
         if (!$username || !$password || !$email) {
-            $this->response(3, '参数不全，请检查');
+            $this->response($STUTAS['PARAM_MISSING']['code'], $STUTAS['PARAM_MISSING']['msg']);
         }
+
+        //判断用户名是否存在
         $res = Db('member')->where('username', $username)->find();
         if ($res) {
-            $this->response(2, '用户名已存在');
+            $this->response($STUTAS['USER_EXIST']['code'], $STUTAS['USER_EXIST']['msg']);
         }
         $time = date('Y-m-d H:i:s');
         $data = array(
             'username' => $username,
             'password' => $password,
             'email' => $email,
-            'r_date' => $time
+            'r_date' => $time,
         );
+
+        //插入数据
         $res = Db('member')->insert($data);
+        $config = array();
         if ($res) {
-            $this->response(1, '注册成功');
+            $config = $STUTAS['SUCCESS'];
         } else {
-            $this->response(0, '注册失败');
+            $config = $STUTAS['FAIL'];
         }
+        $this->response($config['code'], $config['msg']);
     }
 }

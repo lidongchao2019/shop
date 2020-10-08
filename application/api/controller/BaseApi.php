@@ -3,13 +3,13 @@
 namespace app\api\controller;
 
 use Exception;
-use think\Controller;
-use think\Response;
-use think\Request;
-use think\Exception\HttpResponseException;
+use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
 use Firebase\JWT\SignatureInvalidException;
-use Firebase\JWT\ExpiredException;
+use think\Controller;
+use think\Exception\HttpResponseException;
+use think\Request;
+use think\Response;
 
 class BaseApi extends Controller
 {
@@ -18,7 +18,7 @@ class BaseApi extends Controller
         'member/register',
         'goods/getlist',
         'goods/getinfo',
-        'category/index'
+        'category/index',
     ];
 
     protected $header = [];
@@ -27,7 +27,7 @@ class BaseApi extends Controller
     {
         parent::__construct();
 
-        $this->header['Access-Control-Allow-Origin']  = '*';
+        $this->header['Access-Control-Allow-Origin'] = '*';
         $this->header['Access-Control-Allow-Headers'] = 'Origin, X-Requested-With, Content-Type, Accept, Authorization';
         $this->header['Access-Control-Allow-Methods'] = 'GET,POST,PATCH,PUT,DELETE,OPTIONS';
         // header("Access-Control-Allow-Origin: *");
@@ -55,11 +55,11 @@ class BaseApi extends Controller
         }
     }
 
-    protected function response($code = '200', $msg = 'success', $data = [], $token = '')
+    protected function response($code = '200', $msg = 'success', $data = [], $token = '', $page = [])
     {
         $res = [
             'code' => $code,
-            'msg' => $msg
+            'msg' => $msg,
         ];
 
         if ($data) {
@@ -70,8 +70,12 @@ class BaseApi extends Controller
             $res['token'] = $token;
         }
 
+        if ($page) {
+            $res['page'] = $page;
+        }
+
         $type = config('default_ajax_return');
         $response = Response::create($res, $type)->header($this->header);
-        throw  new HttpResponseException($response);
+        throw new HttpResponseException($response);
     }
 }
