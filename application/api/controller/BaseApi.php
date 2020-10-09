@@ -6,6 +6,7 @@ use Exception;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
 use Firebase\JWT\SignatureInvalidException;
+use think\Config;
 use think\Controller;
 use think\Exception\HttpResponseException;
 use think\Request;
@@ -42,16 +43,17 @@ class BaseApi extends Controller
     public function checkLogin()
     {
         $jwt = input('token');
+        $STATUS = config('config.STATUS');
         try {
             $jwt = JWT::decode($jwt, 'itcast', ['HS256']);
             $_GET['userid'] = $jwt->userid;
             $_POST['userid'] = $jwt->userid;
         } catch (SignatureInvalidException $e) {
-            $this->response(2, '信息篡改，请重新登录');
+            $this->response($STATUS['USER_ERROR']['code'], $STATUS['USER_ERROR']['msg']);
         } catch (ExpiredException $e) {
-            $this->response(3, '时间过期，请重新登录');
+            $this->response($STATUS['USER_EXPIR']['code'], $STATUS['USER_EXPIR']['msg']);
         } catch (Exception $e) {
-            $this->response(4, '请重新登录');
+            $this->response($STATUS['USER_JWT_ERROR']['code'], $STATUS['USER_JWT_ERROR']['msg']);
         }
     }
 

@@ -2,8 +2,8 @@
 
 namespace app\api\controller;
 
-use think\Controller;
 use think\Config;
+use think\Controller;
 use think\Db;
 
 class Cart extends BaseApi
@@ -71,17 +71,18 @@ class Cart extends BaseApi
     public function remove()
     {
         $id = input('get.id');
+        $userid = $_GET['userid'];
         $STATUS = config('config.STATUS');
 
         if (!$id) {
             $this->response($STATUS['PARAM_MISSING']['code'], $STATUS['PARAM_MISSING']['msg']);
             return;
         }
-        $res = Db('cart')->delete($id);
+        $res = Db('cart')->where('mid', $userid)->delete($id);
         if ($res) {
             $this->response($STATUS['SUCCESS']['code'], $STATUS['SUCCESS']['msg']);
         } else {
-            $this->response($STATUS['FAIL']['code'], $STATUS['FAIL']['msg']);
+            $this->response($STATUS['RESULT_CART_NOT_EXITS']['code'], $STATUS['RESULT_CART_NOT_EXITS']['msg']);
         }
     }
 
@@ -102,7 +103,7 @@ class Cart extends BaseApi
         if ($res) {
             $this->response($STATUS['SUCCESS']['code'], $STATUS['SUCCESS']['msg']);
         } else {
-            $this->response($STATUS['FAIL']['code'], $STATUS['FAIL']['msg']);
+            $this->response($STATUS['RESULT_CART_NOT_EXITS']['code'], $STATUS['RESULT_CART_NOT_EXITS']['msg']);
         }
     }
 }
